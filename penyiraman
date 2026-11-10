@@ -1,0 +1,77 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#include <DHT.h>
+
+#define SOIL_PIN 34
+#define DHT_PIN 15
+#define LED_PIN 2
+
+#define DHTTYPE DHT22
+
+DHT dht(DHT_PIN, DHTTYPE);
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+void setup() {
+  Serial.begin(115200);
+
+  pinMode(LED_PIN, OUTPUT);
+
+  dht.begin();
+  lcd.init();
+  lcd.backlight();
+
+  lcd.setCursor(0, 0);
+  lcd.print("Monitoring");
+  lcd.setCursor(0, 1);
+  lcd.print("Tanaman...");
+  delay(2000);
+}
+
+void loop() {
+  int soilValue = analogRead(SOIL_PIN);
+
+  // Nilai kelembapan dalam persen
+  int moisture = map(soilValue, 4095, 0, 0, 100);
+  moisture = constrain(moisture, 0, 100);
+
+  float suhu = dht.readTemperature();
+  float udara = dht.readHumidity();
+
+  if (isnan(suhu) || isnan(udara)) {
+    Serial.println("Sensor DHT22 error");
+    delay(2000);
+    return;
+  }
+
+  lcd.clear();
+
+  lcd.setCursor(0, 0);
+  lcd.print("Tanah: ");
+  lcd.print(moisture);
+  lcd.print("%");
+
+  lcd.setCursor(0, 1);
+  lcd.print("Suhu: ");
+  lcd.print(suhu);
+  lcd.print(" C");
+
+  // Logika otomatis
+  if (moisture < 35) {
+    digitalWrite(LED_PIN, HIGH);
+    Serial.println("Tanah kering!");
+  } else {
+    digitalWrite(LED_PIN, LOW);
+    Serial.println("Tanah lembap");
+  }
+
+  Serial.print("Kelembapan tanah: ");
+  Serial.println(moisture);
+
+  Serial.print("Suhu udara: ");
+  Serial.println(suhu);
+
+  Serial.print("Kelembapan udara: ");
+  Serial.println(udara);
+
+  delay(2000);
+}
