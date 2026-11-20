@@ -1,0 +1,65 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+// Inisialisasi LCD I2C
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+// Pin sensor dan LED
+#define SOIL_PIN 34
+#define LED_PIN  25
+
+int nilaiSensor;
+int kelembapan;
+
+void setup() {
+  Serial.begin(115200);
+
+  pinMode(LED_PIN, OUTPUT);
+
+  lcd.init();
+  lcd.backlight();
+
+  lcd.setCursor(0, 0);
+  lcd.print("Monitoring Tanah");
+  lcd.setCursor(0, 1);
+  lcd.print("Memulai...");
+  delay(2000);
+  lcd.clear();
+}
+
+void loop() {
+  // Membaca sensor kelembapan tanah
+  nilaiSensor = analogRead(SOIL_PIN);
+
+  // Mengubah nilai sensor menjadi persen
+  kelembapan = map(nilaiSensor, 4095, 0, 0, 100);
+  kelembapan = constrain(kelembapan, 0, 100);
+
+  // Menampilkan data pada LCD
+  lcd.setCursor(0, 0);
+  lcd.print("Kelembapan: ");
+  lcd.print(kelembapan);
+  lcd.print("%  ");
+
+  lcd.setCursor(0, 1);
+
+  if (kelembapan < 40) {
+    lcd.print("Tanah: Kering   ");
+    digitalWrite(LED_PIN, HIGH);
+  }
+  else if (kelembapan < 70) {
+    lcd.print("Tanah: Lembap   ");
+    digitalWrite(LED_PIN, LOW);
+  }
+  else {
+    lcd.print("Tanah: Basah    ");
+    digitalWrite(LED_PIN, LOW);
+  }
+
+  // Menampilkan data di Serial Monitor
+  Serial.print("Kelembapan: ");
+  Serial.print(kelembapan);
+  Serial.println("%");
+
+  delay(1000);
+}
